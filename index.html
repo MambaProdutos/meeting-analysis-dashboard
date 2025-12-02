@@ -3,195 +3,953 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Analysis Dashboard - Análise de Reuniões</title>
-    <meta name="description" content="Plataforma inteligente para análise de reuniões com base em playbooks e métricas de performance">
-    <link rel="stylesheet" href="styles.css">
+    <title>Meeting AI - Análise de Reuniões</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- VARIABLES & RESET --- */
+        :root {
+            --primary: #6366f1; /* Indigo 500 */
+            --primary-hover: #4f46e5;
+            --secondary: #8b5cf6; /* Purple 500 */
+            --bg-dark: #0f172a; /* Slate 900 */
+            --bg-card: #1e293b; /* Slate 800 */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --glass: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --radius: 16px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            --font-main: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
+        }
+
+        /* --- LAYOUT --- */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 10;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255, 0.05);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.2) 0%, transparent 100%);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        /* --- COMPONENTS --- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        /* INPUTS & TEXTAREA */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-main);
+            font-family: var(--font-main);
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* UPLOAD ZONE */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .file-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-btn {
+            color: var(--danger);
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .delete-btn:hover { opacity: 1; }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: rgba(255,255,255,0.03);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* FEEDBACK LIST */
+        .feedback-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .feedback-item {
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .feedback-item.critical { border-left-color: var(--danger); }
+        .feedback-item.warning { border-left-color: var(--warning); }
+
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .badge.critical { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .badge.warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        /* TOAST NOTIFICATION */
+        #toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .sidebar { width: 80px; padding: 2rem 1rem; }
+            .nav-text, .brand span { display: none; }
+            .nav-item { justify-content: center; }
+        }
+        @media (max-width: 600px) {
+            .sidebar { display: none; } /* Simplified for mobile demo */
+            .main-content { padding: 1rem; }
+        }
+    </style>
 </head>
 <body>
+
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="32" height="32" rx="8" fill="url(#gradient1)"/>
-                        <path d="M16 8L22 12V20L16 24L10 20V12L16 8Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-                        <defs>
-                            <linearGradient id="gradient1" x1="0" y1="0" x2="32" y2="32">
-                                <stop offset="0%" stop-color="#6366f1"/>
-                                <stop offset="100%" stop-color="#8b5cf6"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <h1>Meeting<span>AI</span></h1>
-                </div>
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <span>MeetingAI</span>
             </div>
             
-            <nav class="sidebar-nav">
-                <button class="nav-item active" data-view="upload">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span>Nova Análise</span>
-                </button>
-                
-                <button class="nav-item" data-view="playbooks">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    </svg>
-                    <span>Playbooks</span>
-                </button>
-                
-                <button class="nav-item" data-view="dashboard">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7"/>
-                        <rect x="14" y="3" width="7" height="7"/>
-                        <rect x="14" y="14" width="7" height="7"/>
-                        <rect x="3" y="14" width="7" height="7"/>
-                    </svg>
-                    <span>Dashboard</span>
-                </button>
-            </nav>
-        </aside>
+            <div class="nav-menu">
+                <div class="nav-item" onclick="app.navigate('upload')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span class="nav-text">Nova Análise</span>
+                </div>
+                <div class="nav-item" onclick="app.navigate('playbooks')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span class="nav-text">Playbooks</span>
+                </div>
+                <div class="nav-item" onclick="app.navigate('dashboard')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+            </div>
+        </nav>
 
-        <!-- Main Content -->
+        <!-- MAIN CONTENT -->
         <main class="main-content">
-            <!-- Upload View -->
-            <section id="upload-view" class="view active">
-                <div class="view-header">
-                    <h2>Nova Análise de Reunião</h2>
-                    <p>Faça upload da transcrição e deixe a IA analisar a performance</p>
+            
+            <!-- VIEW: UPLOAD/NEW ANALYSIS -->
+            <section id="view-upload" class="view-section active">
+                <h1>Nova Análise</h1>
+                <p class="subtitle">Cole a transcrição da reunião para receber insights baseados nos seus playbooks.</p>
+                
+                <div class="card">
+                    <div class="input-group">
+                        <label>Transcrição da Reunião</label>
+                        <textarea id="transcript-input" placeholder="Cole o texto aqui (Ex: Vendedor: Olá, tudo bem? Cliente: Tudo ótimo...)"></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                         <label>Ou faça upload de um arquivo de texto (.txt)</label>
+                         <input type="file" id="transcript-file" accept=".txt" onchange="app.handleTranscriptFile(this)">
+                    </div>
+
+                    <button id="btn-analyze" class="btn" onclick="app.runAnalysis()">
+                        <span class="btn-text">Analisar com IA</span>
+                        <div class="spinner" style="display: none;"></div>
+                    </button>
                 </div>
 
-                <div class="upload-container">
-                    <div class="upload-card">
-                        <div class="upload-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="12" y1="18" x2="12" y2="12"/>
-                                <line x1="9" y1="15" x2="15" y2="15"/>
-                            </svg>
-                        </div>
-                        <h3>Transcrição da Reunião</h3>
-                        <p>Cole o texto ou faça upload do arquivo</p>
-                        
-                        <textarea 
-                            id="transcription-input" 
-                            placeholder="Cole aqui a transcrição da reunião..."
-                            rows="10"
-                        ></textarea>
-                        
-                        <div class="upload-actions">
-                            <label for="file-upload" class="btn-secondary">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                    <polyline points="17 8 12 3 7 8"/>
-                                    <line x1="12" y1="3" x2="12" y2="15"/>
-                                </svg>
-                                Upload Arquivo
-                            </label>
-                            <input type="file" id="file-upload" accept=".txt,.doc,.docx" style="display: none;">
-                            
-                            <button id="analyze-btn" class="btn-primary">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                                </svg>
-                                Analisar Reunião
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="info-card">
-                        <h4>Como funciona?</h4>
-                        <ol>
-                            <li>Cole ou faça upload da transcrição da reunião</li>
-                            <li>A IA analisa com base nos playbooks cadastrados</li>
-                            <li>Receba métricas detalhadas e feedback acionável</li>
-                        </ol>
-                        
-                        <div class="metrics-preview">
-                            <h5>Métricas Avaliadas:</h5>
-                            <div class="metric-tags">
-                                <span class="tag">Conhecimento Técnico</span>
-                                <span class="tag">Rapport</span>
-                                <span class="tag">Estratégia em Marketplaces</span>
-                                <span class="tag">Comunicação Clara</span>
-                                <span class="tag">Resolução de Problemas</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="card" style="border-left: 4px solid var(--primary);">
+                    <h4>💡 Dica</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                        Certifique-se de que seus Playbooks estão cadastrados na aba "Playbooks" para uma análise mais precisa.
+                    </p>
                 </div>
             </section>
 
-            <!-- Playbooks View -->
-            <section id="playbooks-view" class="view">
-                <div class="view-header">
-                    <h2>Gerenciar Playbooks</h2>
-                    <p>Adicione ou remova PDFs que servirão como base para análise</p>
+            <!-- VIEW: PLAYBOOKS -->
+            <section id="view-playbooks" class="view-section">
+                <h1>Gerenciar Playbooks</h1>
+                <p class="subtitle">Faça upload dos seus guias de vendas e metodologias (PDF).</p>
+
+                <div class="upload-zone" id="drop-zone">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color: var(--primary); margin-bottom: 1rem;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Arraste e solte seus PDFs aqui ou <span style="color: var(--primary); font-weight: 600;">clique para buscar</span></p>
+                    <input type="file" id="playbook-input" accept="application/pdf" multiple style="display: none;">
                 </div>
 
-                <div class="playbooks-container">
-                    <div class="upload-playbook-card">
-                        <input type="file" id="playbook-upload" accept=".pdf" multiple style="display: none;">
-                        <label for="playbook-upload" class="upload-zone">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                            <h3>Upload Playbooks</h3>
-                            <p>Arraste arquivos PDF ou clique para selecionar</p>
-                            <span class="file-hint">Suporta múltiplos arquivos</span>
-                        </label>
-                    </div>
-
-                    <div class="playbooks-list" id="playbooks-list">
-                        <!-- Playbooks will be dynamically added here -->
-                    </div>
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Playbooks Ativos</h3>
+                <div id="playbook-list" class="file-list">
+                    <!-- Files will be injected here -->
                 </div>
             </section>
 
-            <!-- Dashboard View -->
-            <section id="dashboard-view" class="view">
-                <div class="view-header">
-                    <h2>Análise de Performance</h2>
-                    <p id="meeting-info">Aguardando análise...</p>
+            <!-- VIEW: DASHBOARD -->
+            <section id="view-dashboard" class="view-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h1>Resultados da Análise</h1>
+                    <button class="btn btn-outline" onclick="app.navigate('upload')">Nova Análise</button>
+                </div>
+                
+                <!-- Score Header -->
+                <div class="card" style="background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%); border-left: 4px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Tipo de Reunião</span>
+                            <h3 id="res-type">---</h3>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Duração Estimada</span>
+                            <h3 id="res-duration">---</h3>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Objetivo</span>
+                            <h3 id="res-objective" style="font-size: 1rem; max-width: 400px;">---</h3>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="dashboard-container">
-                    <div class="chart-card">
-                        <h3>Performance por Área</h3>
+                <div class="dashboard-grid">
+                    <!-- Chart Column -->
+                    <div class="card">
+                        <h4 style="margin-bottom: 1rem; text-align: center;">Performance Multidimensional</h4>
                         <div class="chart-container">
-                            <canvas id="performance-chart"></canvas>
+                            <canvas id="radarChart" width="300" height="300"></canvas>
                         </div>
-                        <div class="chart-legend" id="chart-legend"></div>
                     </div>
 
-                    <div class="feedback-card">
-                        <h3>Pontos de Melhoria</h3>
-                        <div id="feedback-list" class="feedback-list">
-                            <div class="empty-state">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="16" x2="12" y2="12"/>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
-                                </svg>
-                                <p>Nenhuma análise disponível ainda</p>
+                    <!-- Metrics & Feedback Column -->
+                    <div>
+                        <div class="card">
+                            <h4 style="margin-bottom: 1rem;">Pontos de Atenção & Sugestões</h4>
+                            <div id="feedback-container" class="feedback-list">
+                                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">Nenhuma análise realizada ainda.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+
         </main>
     </div>
 
-    <script src="app.js"></script>
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <script>
+        /**
+         * APP LOGIC
+         * Vanilla JS - Single File Structure
+         */
+        const app = {
+            // State
+            state: {
+                currentView: 'upload',
+                playbooks: [], // Stores { name: string, date: string }
+                analysisResult: null
+            },
+            
+            // Configuration
+            config: {
+                apiKey: '', // Empty string to use environment key
+                apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent'
+            },
+
+            // Initialization
+            init: function() {
+                this.loadPlaybooks();
+                this.setupNavigation();
+                this.setupDragDrop();
+                this.navigate('upload');
+            },
+
+            // --- NAVIGATION ---
+            navigate: function(viewId) {
+                // Update State
+                this.state.currentView = viewId;
+
+                // UI Updates
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                document.getElementById(`view-${viewId}`).classList.add('active');
+
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                // Find index based on viewId simple mapping
+                const navIndex = viewId === 'upload' ? 0 : viewId === 'playbooks' ? 1 : 2;
+                document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
+
+                // If going to dashboard without data, warn
+                if (viewId === 'dashboard' && !this.state.analysisResult) {
+                   // Optional: this.showToast('Nenhuma análise disponível ainda.', 'warning');
+                }
+            },
+
+            setupNavigation: function() {
+                // Done via onclick in HTML for simplicity
+            },
+
+            // --- PLAYBOOK MANAGEMENT ---
+            loadPlaybooks: function() {
+                const stored = localStorage.getItem('meeting_ai_playbooks');
+                if (stored) {
+                    this.state.playbooks = JSON.parse(stored);
+                    this.renderPlaybooks();
+                }
+            },
+
+            savePlaybooks: function() {
+                localStorage.setItem('meeting_ai_playbooks', JSON.stringify(this.state.playbooks));
+                this.renderPlaybooks();
+            },
+
+            addPlaybook: function(file) {
+                // Validate duplicate
+                if (this.state.playbooks.some(p => p.name === file.name)) {
+                    this.showToast(`O playbook "${file.name}" já existe.`, 'warning');
+                    return;
+                }
+                
+                // Add metadata only (Browser cannot easily store full PDF content in localStorage due to 5MB limit)
+                this.state.playbooks.push({
+                    name: file.name,
+                    date: new Date().toLocaleDateString(),
+                    size: (file.size / 1024).toFixed(1) + ' KB'
+                });
+                
+                this.savePlaybooks();
+                this.showToast('Playbook adicionado com sucesso!', 'success');
+            },
+
+            removePlaybook: function(index) {
+                this.state.playbooks.splice(index, 1);
+                this.savePlaybooks();
+                this.showToast('Playbook removido.', 'default');
+            },
+
+            renderPlaybooks: function() {
+                const list = document.getElementById('playbook-list');
+                list.innerHTML = '';
+
+                if (this.state.playbooks.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Nenhum playbook cadastrado.</p>';
+                    return;
+                }
+
+                this.state.playbooks.forEach((pb, index) => {
+                    const el = document.createElement('div');
+                    el.className = 'file-card';
+                    el.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.8rem; overflow: hidden;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <div style="overflow: hidden;">
+                                <div style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${pb.name}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">${pb.date} • ${pb.size}</div>
+                            </div>
+                        </div>
+                        <div class="delete-btn" onclick="app.removePlaybook(${index})">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </div>
+                    `;
+                    list.appendChild(el);
+                });
+            },
+
+            setupDragDrop: function() {
+                const dropZone = document.getElementById('drop-zone');
+                const input = document.getElementById('playbook-input');
+
+                dropZone.addEventListener('click', () => input.click());
+                
+                input.addEventListener('change', (e) => {
+                    Array.from(e.target.files).forEach(file => this.addPlaybook(file));
+                    input.value = ''; // Reset
+                });
+
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    Array.from(files).forEach(file => {
+                        if (file.type === 'application/pdf') {
+                            this.addPlaybook(file);
+                        } else {
+                            this.showToast('Apenas arquivos PDF são permitidos.', 'danger');
+                        }
+                    });
+                });
+            },
+
+            handleTranscriptFile: function(input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('transcript-input').value = e.target.result;
+                    this.showToast('Transcrição carregada!', 'success');
+                };
+                reader.readAsText(file);
+            },
+
+            // --- GEMINI ANALYSIS LOGIC ---
+            runAnalysis: async function() {
+                const transcript = document.getElementById('transcript-input').value.trim();
+                
+                // Validations
+                if (!transcript) {
+                    this.showToast('Por favor, insira uma transcrição.', 'warning');
+                    return;
+                }
+                
+                if (transcript.length < 50) {
+                    this.showToast('Transcrição muito curta para análise.', 'warning');
+                    return;
+                }
+
+                // UI Loading
+                const btn = document.getElementById('btn-analyze');
+                const btnText = btn.querySelector('.btn-text');
+                const spinner = btn.querySelector('.spinner');
+                
+                btn.disabled = true;
+                btnText.textContent = 'Analisando...';
+                spinner.style.display = 'block';
+
+                try {
+                    // Construct Prompt
+                    const playbooksList = this.state.playbooks.map(p => p.name).join(', ');
+                    const systemPrompt = `
+                        Você é um especialista em análise de reuniões e coaching de vendas.
+                        Analise a transcrição abaixo.
+                        
+                        Contexto dos Playbooks Ativos (considere as melhores práticas inferidas pelos títulos): ${playbooksList || "Nenhum playbook específico, use boas práticas gerais de vendas."}
+
+                        Retorne APENAS um objeto JSON válido (sem markdown, sem code blocks) com a seguinte estrutura:
+                        {
+                            "meetingType": "String (ex: Vendas, Suporte, Onboarding)",
+                            "objective": "Resumo de 1 frase",
+                            "duration": "Estimativa baseada no texto (ex: 30 min)",
+                            "metrics": {
+                                "Conhecimento Técnico": 0-100,
+                                "Rapport": 0-100,
+                                "Estratégia em Marketplaces": 0-100,
+                                "Comunicação Clara": 0-100,
+                                "Resolução de Problemas": 0-100
+                            },
+                            "feedback": [
+                                {
+                                    "category": "Nome da métrica relacionada",
+                                    "issue": "O que foi feito errado ou poderia melhorar",
+                                    "suggestion": "Sugestão acionável",
+                                    "timestamp": "Momento aproximado (ex: Começo, Meio ou HH:MM:SS)",
+                                    "severity": "warning ou critical"
+                                }
+                            ]
+                        }
+                    `;
+
+                    // API Call
+                    const response = await fetch(`${this.config.apiUrl}?key=${this.config.apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: systemPrompt + "\n\nTRANSCRICÃO:\n" + transcript }]
+                            }]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`Erro na API: ${response.status} - ${errorData}`);
+                    }
+
+                    const data = await response.json();
+                    let textResult = data.candidates[0].content.parts[0].text;
+                    
+                    // Clean Markdown if present (Gemini sometimes adds ```json ... ```)
+                    textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+                    
+                    const jsonResult = JSON.parse(textResult);
+                    
+                    this.state.analysisResult = jsonResult;
+                    this.renderDashboard(jsonResult);
+                    this.navigate('dashboard');
+                    this.showToast('Análise concluída com sucesso!', 'success');
+
+                } catch (error) {
+                    console.error(error);
+                    this.showToast('Falha na análise. Verifique o console ou a API Key.', 'danger');
+                } finally {
+                    btn.disabled = false;
+                    btnText.textContent = 'Analisar com IA';
+                    spinner.style.display = 'none';
+                }
+            },
+
+            // --- DASHBOARD RENDERING ---
+            renderDashboard: function(data) {
+                // Texts
+                document.getElementById('res-type').textContent = data.meetingType;
+                document.getElementById('res-duration').textContent = data.duration;
+                document.getElementById('res-objective').textContent = data.objective;
+
+                // Feedback List
+                const list = document.getElementById('feedback-container');
+                list.innerHTML = '';
+                
+                if (data.feedback && data.feedback.length > 0) {
+                    data.feedback.forEach(item => {
+                        const el = document.createElement('div');
+                        el.className = `feedback-item ${item.severity}`;
+                        el.innerHTML = `
+                            <div class="feedback-header">
+                                <span style="font-weight: 600; color: var(--primary);">${item.category}</span>
+                                <span class="badge ${item.severity}">${item.severity}</span>
+                            </div>
+                            <p style="margin-bottom: 0.5rem;"><strong>Problema:</strong> ${item.issue}</p>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">👉 ${item.suggestion}</p>
+                            <div style="margin-top:0.5rem; font-size: 0.8rem; opacity: 0.7;">⏱ ${item.timestamp || 'N/A'}</div>
+                        `;
+                        list.appendChild(el);
+                    });
+                } else {
+                    list.innerHTML = '<p>Nenhum ponto crítico encontrado. Parabéns!</p>';
+                }
+
+                // Chart
+                this.drawRadarChart(data.metrics);
+            },
+
+            drawRadarChart: function(metricsObj) {
+                const canvas = document.getElementById('radarChart');
+                const ctx = canvas.getContext('2d');
+                
+                // High DPI scaling
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                // Fix CSS size
+                canvas.style.width = `${rect.width}px`;
+                canvas.style.height = `${rect.height}px`;
+
+                const width = rect.width;
+                const height = rect.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = (Math.min(width, height) / 2) - 40; // Padding
+
+                // Data prep
+                const labels = Object.keys(metricsObj);
+                const values = Object.values(metricsObj);
+                const count = labels.length;
+                const angleStep = (Math.PI * 2) / count;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // 1. Draw Grid (Pentagons)
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                for (let r = 0.2; r <= 1; r += 0.2) {
+                    ctx.beginPath();
+                    for (let i = 0; i < count; i++) {
+                        const angle = i * angleStep - Math.PI / 2;
+                        const x = centerX + Math.cos(angle) * (radius * r);
+                        const y = centerY + Math.sin(angle) * (radius * r);
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                // 2. Draw Axes
+                ctx.beginPath();
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(x, y);
+                    
+                    // Draw Labels
+                    const labelX = centerX + Math.cos(angle) * (radius + 20);
+                    const labelY = centerY + Math.sin(angle) * (radius + 20);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '10px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Split long labels
+                    const words = labels[i].split(' ');
+                    if(words.length > 1 && angle !== -Math.PI/2) {
+                        ctx.fillText(words[0], labelX, labelY - 6);
+                        ctx.fillText(words.slice(1).join(' '), labelX, labelY + 6);
+                    } else {
+                        ctx.fillText(labels[i], labelX, labelY);
+                    }
+                }
+                ctx.stroke();
+
+                // 3. Draw Data Area
+                ctx.beginPath();
+                values.forEach((val, i) => {
+                    const normalized = val / 100;
+                    const angle = i * angleStep - Math.PI / 2;
+                    const x = centerX + Math.cos(angle) * (radius * normalized);
+                    const y = centerY + Math.sin(angle) * (radius * normalized);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                
+                // Gradient Fill
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Indigo
+                gradient.addColorStop(1, 'rgba(139, 92, 246, 0.1)'); // Purple
+
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.strokeStyle = '#8b5cf6';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 4. Draw Points
+                values.forEach((val, i) => {
+                    const normalized = val / 100;
+                    const angle = i * angleStep - Math.PI / 2;
+                    const x = centerX + Math.cos(angle) * (radius * normalized);
+                    const y = centerY + Math.sin(angle) * (radius * normalized);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                });
+            },
+
+            // --- UTILS ---
+            showToast: function(message, type = 'default') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                
+                let icon = '';
+                if(type === 'success') icon = '✅';
+                if(type === 'warning') icon = '⚠️';
+                if(type === 'danger') icon = '❌';
+                
+                toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+                
+                if (type === 'danger') toast.style.borderColor = 'var(--danger)';
+                if (type === 'success') toast.style.borderColor = 'var(--success)';
+
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(20px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+    </script>
 </body>
 </html>
